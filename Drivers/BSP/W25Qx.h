@@ -10,6 +10,8 @@
 *                                       http://www.waveshare.net
 *                                          All Rights Reserved
 *
+* Website			  :	https://www.waveshare.com/wiki/W25QXX_DataFlash_Board
+*
 *********************************************************************************************************/
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __W25Qx_H
@@ -20,8 +22,8 @@
 #endif 
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx.h"
-#include "spi.h"
+//#include "stm32f1xx.h"
+#include "stm32g0xx.h"
 	 
 /** @addtogroup BSP
   * @{
@@ -30,7 +32,12 @@
 /** @addtogroup Components
   * @{
   */ 
-  
+#define CS_Pin 			GPIO_PIN_9
+#define CS_GPIO_Port 	GPIOB
+#define W25Q_SPI		hspi2
+
+extern SPI_HandleTypeDef W25Q_SPI;
+
 /** @addtogroup W25Q128FV
   * @{
   */
@@ -126,18 +133,18 @@
 #define W25Qx_OK            ((uint8_t)0x00)
 #define W25Qx_ERROR         ((uint8_t)0x01)
 #define W25Qx_BUSY          ((uint8_t)0x02)
-#define W25Qx_TIMEOUT				((uint8_t)0x03)
+#define W25Qx_TIMEOUT		((uint8_t)0x03)
 
 
 uint8_t BSP_W25Qx_Init(void);
-static void	BSP_W25Qx_Reset(void);
-static uint8_t BSP_W25Qx_GetStatus(void);
+uint8_t BSP_W25Qx_GetStatus(void);
 uint8_t BSP_W25Qx_WriteEnable(void);
 void BSP_W25Qx_Read_ID(uint8_t *ID);
 uint8_t BSP_W25Qx_Read(uint8_t* pData, uint32_t ReadAddr, uint32_t Size);
 uint8_t BSP_W25Qx_Write(uint8_t* pData, uint32_t WriteAddr, uint32_t Size);
 uint8_t BSP_W25Qx_Erase_Block(uint32_t Address);
 uint8_t BSP_W25Qx_Erase_Chip(void);
+void BSP_W25Qx_Read_StatusRegister1(uint8_t *SR1);
 
 /**
   * @}
