@@ -23,6 +23,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
+#include "W25Qx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,7 +47,14 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+#ifndef IS_EXTLOADER
+#define STARTINGBLOCK	0x00
+#define ARRAYSIZE 0x300
+uint8_t wData[ARRAYSIZE];
+uint8_t rData[ARRAYSIZE];
+uint8_t ID[4];
+uint32_t i;
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,7 +78,9 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+#ifndef IS_EXTLOADER
+  uint8_t SR1;
+#endif
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -93,7 +104,107 @@ int main(void)
   MX_SPI2_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+#ifndef IS_EXTLOADER
   printf("W25Q Pre-Test\n\r");
+  printf("=====================================================================\n\r");
+  printf("Perform the following sequence:\n\r");
+  printf("\tRead W25Q from Sector %d with length 0x%x\n\r", STARTINGBLOCK, ARRAYSIZE);
+  printf("\tRead device ID\n\r");
+  printf("\tErase Sector 0x%x\n\r", STARTINGBLOCK);
+  printf("\tWrite W25Q from Sector %d with length 0x%x\n\r", STARTINGBLOCK, ARRAYSIZE);
+  printf("\tRead W25Q again from Sector %d with length 0x%x\n\r", STARTINGBLOCK, ARRAYSIZE);
+  printf("\tCompare\n\r");
+  printf("=====================================================================\n\r");
+
+  printf("\r\nStandard-SPI-W25Qxxx Example \r\n");
+  printf("W25Q Init and Reset\n\r");
+  BSP_W25Qx_Init();
+//  BSP_W25Qx_Read_ID(ID);
+//  printf("\tManufacture: 0x%X\tDevice ID: 0x%x\n\r", ID[0], ID[1]);
+//
+  BSP_W25Qx_Read_StatusRegister1(&SR1);
+  printf("\tStatus Register 1 = 0x%x\n\r\n\r", SR1);
+
+//	/*##-0  Mass Erase #################################*/
+//	printf("Perform Chip Erase...\n\r");
+//	BSP_W25Qx_Erase_Chip();
+//	printf("\tDone!");
+
+	/*##-3- Read the flash     ########################*/
+	if(BSP_W25Qx_Read(rData, STARTINGBLOCK * W25Q128FV_SUBSECTOR_SIZE, ARRAYSIZE)== W25Qx_OK)
+		//printf("Standard SPI Read ok\r\n\r\n");
+		printf("Standard SPI Read Data from Sector %d with length 0x%x: OK!\r\n", STARTINGBLOCK, ARRAYSIZE);
+	else
+		Error_Handler();
+
+	//printf("Standard SPI Read Data from Sector %d with length 0x%x:\r\n", STARTINGBLOCK, ARRAYSIZE);
+	printf("\n\rDisplay Read Data : \r\n");
+	for(i =0;i<ARRAYSIZE;i++)
+		printf("0x%02X  ",rData[i]);
+	printf("\r\n\r\n");
+
+	/*##-1- Read the device ID  ########################*/
+	BSP_W25Qx_Init();
+	BSP_W25Qx_Read_ID(ID);
+	printf("W25Qxxx ID is : ");
+	for(i=0;i<2;i++)
+	{
+		printf("0x%02X ",ID[i]);
+	}
+	printf("\r\n\r\n");
+
+	/*##-2- Erase Block ##################################*/
+//	uint32_t EraseBlockNumber = (ARRAYSIZE / W25Q128FV_SUBSECTOR_SIZE) + 1;
+//    for (i=0;i<EraseBlockNumber;i++)
+//    {
+//    	if(BSP_W25Qx_Erase_Block(i) == W25Qx_OK)
+//    		printf(" Standard SPI Erase Block %d ok\r\n", (int)i);
+//    	else
+//    		Error_Handler();
+//    }
+	if(BSP_W25Qx_Erase_Block(STARTINGBLOCK) == W25Qx_OK)
+		printf("Standard SPI Erase Block %d: OK!\r\n", STARTINGBLOCK);
+	else
+		Error_Handler();
+
+	/*##-2- Written to the flash ########################*/
+	/* Prepare buffer */
+	uint32_t loop = ARRAYSIZE / W25Q128FV_PAGE_SIZE;
+	for (uint8_t j=0;j<loop;j++)
+	{
+		for(i =0;i<0x100;i ++)
+		{
+			  wData[j*0x100+i] = i;
+			  rData[j*0x100+i] = 0;
+		}
+
+	}
+
+	/* Perform write to flash */
+	if(BSP_W25Qx_Write(wData, STARTINGBLOCK * W25Q128FV_SUBSECTOR_SIZE, ARRAYSIZE)== W25Qx_OK)
+		//printf(" Standard SPI Write ok\r\n");
+		printf("Standard SPI Write Data to Sector %d with length 0x%x: OK!\r\n",STARTINGBLOCK, ARRAYSIZE);
+	else
+		Error_Handler();
+
+	/*##-3- Read the flash     ########################*/
+	if(BSP_W25Qx_Read(rData, STARTINGBLOCK * W25Q128FV_SUBSECTOR_SIZE, ARRAYSIZE)== W25Qx_OK)
+		//printf(" Standard SPI Read ok\r\n\r\n");
+		printf("Standard SPI Read Data from Sector %d with length 0x%x: OK!\r\n",STARTINGBLOCK, ARRAYSIZE);
+	else
+		Error_Handler();
+
+	printf("\n\rDisplay Read Data : \r\n");
+	for(i =0;i<ARRAYSIZE;i++)
+		printf("0x%02X  ",rData[i]);
+	printf("\r\n\r\n");
+
+	/*##-4- check date          ########################*/
+	if(memcmp(wData,rData,ARRAYSIZE) == 0 )
+		printf("W25Q128FV Standard SPI Test OK\r\n");
+	else
+		printf("W25Q128FV Standard SPI Test False\r\n");
+#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
