@@ -1,9 +1,60 @@
-#include "quadspi.h"
-#include "main.h"
-#include "gpio.h"
+/**
+ * 	Reference:
+ *
+ * 	1. MOOC
+ * 	   https://www.st.com/content/st_com/en/support/learning/stm32-education/stm32-moocs/external_QSPI_loader.html
+ * 	   Custom_Loader/Core/Src/Loader_Src.c
+ *
+ * 	2. STM32CubeProgrammer
+ * 	   C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\ExternalLoader
+ * 	   IS61WV51216BLL_STM3210E-EVAL\
+ * 	   M25P64_STM3210E-EVAL\
+ * 	   M29W128GL_STM3210E-EVAL\
+ * 	   N25Q256A_STM32L476G-EVAL\
+ *
+ * 	3. Github
+ * 	   https://github.com/STMicroelectronics/stm32-external-loader
+ */
 
-#define LOADER_OK	0x1
-#define LOADER_FAIL	0x0
+/* Includes ------------------------------------------------------------------*/
+#include "Loader_Src.h"
+
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
+{
+  return HAL_OK;
+}
+
+uint32_t HAL_GetTick(void)
+{
+  return 1;
+}
+
+int itoa(int value,char *ptr)
+{
+	int count=0,temp;
+	if(ptr==NULL)
+		return 0;
+	if(value==0)
+	{
+		*ptr='0';
+		return 1;
+	}
+
+	if(value<0)
+	{
+		value*=(-1);
+		*ptr++='-';
+		count++;
+	}
+	for(temp=value;temp>0;temp/=10,ptr++);
+	*ptr='\0';
+	for(temp=value;temp>0;temp/=10)
+	{
+		*--ptr=temp%10+'0';
+		count++;
+	}
+	return count;
+}
 
 /**
  * @brief  System initialization.
@@ -11,48 +62,31 @@
  * @retval  LOADER_OK = 1	: Operation succeeded
  * @retval  LOADER_FAIL = 0	: Operation failed
  */
-int Init(void) {
+int Init(void)
+{
+  //extern uint8_t _sbss;
+  //memset((void*)&_sbss, 0, 524);	//Zero Bss
 
-	*(uint32_t*)0xE000EDF0=0xA05F0000; //enable interrupts in debug
+  SystemInit();
+  HAL_Init();
+  SystemClock_Config();
+  HAL_SuspendTick();
 
-	SystemInit();
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_SPI2_Init();
 
-/* ADAPTATION TO THE DEVICE
- *
- * change VTOR setting for H7 device
- * SCB->VTOR = 0x24000000 | 0x200;
- *
- * change VTOR setting for other devices
- * SCB->VTOR = 0x20000000 | 0x200;
- *
- * */
+  DBGMSG("\r\nEntering %s\n\r", __func__);
 
-	SCB->VTOR = 0x20000000 | 0x200;
+  DBGMSG("\tBSP_W25Qx_Init\n\r");
+  if (BSP_W25Qx_Init() != W25Qx_OK)
+  {
+	return LOADER_FAIL;
+  }
 
-	HAL_Init();
+  DBGMSG("\rEnd of %s\n\r", __func__);
 
-    SystemClock_Config();
-
-    MX_GPIO_Init();
-	
-	__HAL_RCC_QSPI_FORCE_RESET();  //completely reset peripheral
-    __HAL_RCC_QSPI_RELEASE_RESET();
-
-	if (CSP_QUADSPI_Init() != HAL_OK)
-	{
-		HAL_SuspendTick();
-		return LOADER_FAIL;
-	}
-
-
-	if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK)
-	{
-		HAL_SuspendTick();
-		return LOADER_FAIL;
-	}
-
-		HAL_SuspendTick();
-		return LOADER_OK;
+  return LOADER_OK;
 }
 
 /**
@@ -63,26 +97,21 @@ int Init(void) {
  * @retval  LOADER_OK = 1		: Operation succeeded
  * @retval  LOADER_FAIL = 0	: Operation failed
  */
-int Write(uint32_t Address, uint32_t Size, uint8_t* buffer) {
+int Write(uint32_t Address, uint32_t Size, uint8_t* buffer)
+{
+  DBGMSG("\rEntering %s\n\r", __func__);
+  DBGMSG("\tAddress = 0x%X\n\r", (unsigned int) Address);
+  DBGMSG("\tSize = 0x%08X\n\r", (unsigned int) Size);
 
-	HAL_ResumeTick();
+  uint32_t WriteAddress = Address & (0x0fffffff);
+  DBGMSG("\tWriteAddress = 0x%X\n\r", (unsigned int) WriteAddress);
 
-
-	if(HAL_QSPI_Abort(&hqspi) != HAL_OK)
-	{
-		HAL_SuspendTick();
-		return LOADER_FAIL;
-	}
-
-
-	if (CSP_QSPI_WriteMemory((uint8_t*) buffer, (Address & (0x0fffffff)),Size) != HAL_OK)
-	{
-		HAL_SuspendTick();
-		return LOADER_FAIL;
-	}
-
-	HAL_SuspendTick();
-	return LOADER_OK;
+  if (BSP_W25Qx_Write((uint8_t*) buffer, WriteAddress ,Size) != W25Qx_OK)
+  {
+	return LOADER_FAIL;
+  }
+  DBGMSG("\rEnd of %s\n\r", __func__);
+  return LOADER_OK;
 }
 
 /**
@@ -92,25 +121,36 @@ int Write(uint32_t Address, uint32_t Size, uint8_t* buffer) {
  * @retval  LOADER_OK = 1		: Operation succeeded
  * @retval  LOADER_FAIL = 0	: Operation failed
  */
-int SectorErase(uint32_t EraseStartAddress, uint32_t EraseEndAddress) {
+int SectorErase(uint32_t EraseStartAddress, uint32_t EraseEndAddress)
+{
+  DBGMSG("\rEntering %s\n\r", __func__);
+  DBGMSG("\tEraseStartAddress = 0x%x\n\r", (unsigned int)EraseStartAddress );
+  DBGMSG("\tEraseEndAddress = 0x%x\n\r", (unsigned int)EraseEndAddress );
 
-	HAL_ResumeTick();
+  uint32_t SectorAddr;
+  EraseStartAddress &= 0x0FFFFFFF;
+  EraseEndAddress &= 0x0FFFFFFF;
+  EraseStartAddress = EraseStartAddress -  EraseStartAddress % 0x1000;
 
-	if(HAL_QSPI_Abort(&hqspi) != HAL_OK)
+  DBGMSG("\t************************\n\r");
+
+  while (EraseEndAddress>=EraseStartAddress)
+  {
+	SectorAddr = EraseStartAddress;
+	DBGMSG("\tErasing SectorAddr 0x%x: ", (unsigned int)SectorAddr);
+
+	/*Erases the specified sector*/
+	if (BSP_W25Qx_Erase_Block(SectorAddr) != W25Qx_OK)
 	{
-		HAL_SuspendTick();
-		return LOADER_FAIL;
+	  DBGMSG("Error after BSP_W25Qx_Erase_Block!\n\r");
+	  return LOADER_FAIL;
 	}
+	DBGMSG("OK\n\r");
+	EraseStartAddress+=0x1000;
+  }
 
-
-	if (CSP_QSPI_EraseSector(EraseStartAddress, EraseEndAddress) != HAL_OK)
-	{
-		HAL_SuspendTick();
-		return LOADER_FAIL;
-	}
-
-	HAL_SuspendTick();
-	return LOADER_OK;
+  DBGMSG("SectorErase OK\n\n\r");
+  return LOADER_OK;
 }
 
 /**
@@ -123,28 +163,17 @@ int SectorErase(uint32_t EraseStartAddress, uint32_t EraseEndAddress) {
  *     none
  * Note: Optional for all types of device
  */
-int MassErase(void) {
+int MassErase(void)
+{
+  DBGMSG("\rEntering %s\n\r", __func__);
 
-	HAL_ResumeTick();
+  /*Erases the entire SPI memory*/
+  BSP_W25Qx_Erase_Chip();
 
-
-	if(HAL_QSPI_Abort(&hqspi) != HAL_OK)
-	{
-		HAL_SuspendTick();
-		return LOADER_FAIL;
-	}
-
-
-	if (CSP_QSPI_Erase_Chip() != HAL_OK)
-	{
-		 HAL_SuspendTick();
-		return LOADER_FAIL;
-	}
-
-	HAL_SuspendTick();
-	return LOADER_OK;
+  return LOADER_OK;
 }
 
+#if 0
 /**
  * Description :
  * Calculates checksum value of the memory zone
@@ -255,4 +284,31 @@ uint64_t Verify(uint32_t MemoryAddr, uint32_t RAMBufferAddr, uint32_t Size,uint3
 
 	HAL_SuspendTick();
 	return (checksum << 32);
+}
+#endif
+
+/*******************************************************************************
+ Description :
+ Read data from the device
+ Inputs :
+ 				Address 	: Read location
+ 				Size 		  : Length in bytes
+ 				buffer 		: Address where to get the data to write
+ outputs :
+ 				"1" 		  : Operation succeeded
+ 				"0" 		  : Operation failure
+ Note : Not Mandatory
+********************************************************************************/
+int Read (uint32_t Address, uint32_t Size, uint8_t* Buffer)
+{
+	DBGMSG("\r\nEntering %s\n\r", __func__);
+	DBGMSG("\tAddress = 0x%x\n\r", (unsigned int) Address);
+	DBGMSG("\tSize = 0x%x\n\r", (unsigned int) Size);
+
+	uint32_t StartAddress = Address & 0x0FFFFFFF;
+	DBGMSG("\tStartAddress = 0x%x\n\r", (unsigned int) StartAddress);
+
+	BSP_W25Qx_Read(Buffer, StartAddress, Size);
+	DBGMSG("\rEnd of %s\n\n\r", __func__);
+	return 1;
 }

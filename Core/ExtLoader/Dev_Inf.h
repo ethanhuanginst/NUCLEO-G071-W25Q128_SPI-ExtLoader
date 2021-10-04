@@ -1,3 +1,14 @@
+/**
+ * 	Reference:
+ *
+ * 	1. C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\ExternalLoader
+ * 		IS61WV51216BLL_STM3210E-EVAL\
+ * 		M25P64_STM3210E-EVAL\
+ * 		M29W128GL_STM3210E-EVAL\
+ * 		N25Q256A_STM32L476G-EVAL\
+ *
+ * 	2. https://github.com/STMicroelectronics/stm32-external-loader
+ */
 
 #ifndef DEV_INF_H_
 #define DEV_INF_H_
@@ -32,6 +43,13 @@ struct StorageInfo
    struct 	  DeviceSectors	 sectors[SECTOR_NUM];
 };
 
-
+/**
+  * @}
+  */
+#ifdef _DBG
+#define DBGMSG(format, args...) printf(format, ##args)
+#else
+#define DBGMSG(args...)
+#endif
 
 #endif /* DEV_INF_H_ */
