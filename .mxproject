@@ -9,17 +9,17 @@ CDefines=USE_HAL_DRIVER;STM32G071xx;USE_HAL_DRIVER;USE_HAL_DRIVER;
 [PreviousGenFiles]
 AdvancedFolderStructure=true
 HeaderFileListSize=3
-HeaderFiles#0=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Inc/stm32g0xx_it.h
-HeaderFiles#1=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Inc/stm32g0xx_hal_conf.h
-HeaderFiles#2=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Inc/main.h
+HeaderFiles#0=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Inc/stm32g0xx_it.h
+HeaderFiles#1=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Inc/stm32g0xx_hal_conf.h
+HeaderFiles#2=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Inc/main.h
 HeaderFolderListSize=1
-HeaderPath#0=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Inc
+HeaderPath#0=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Inc
 HeaderFiles=;
 SourceFileListSize=3
-SourceFiles#0=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Src/stm32g0xx_it.c
-SourceFiles#1=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Src/stm32g0xx_hal_msp.c
-SourceFiles#2=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Src/main.c
+SourceFiles#0=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Src/stm32g0xx_it.c
+SourceFiles#1=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Src/stm32g0xx_hal_msp.c
+SourceFiles#2=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Src/main.c
 SourceFolderListSize=1
-SourcePath#0=C:/MyDocuments/OneDrive/OneDrive - STMicroelectronics/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-Github/Core/Src
+SourcePath#0=C:/00_myProjects/TouchGFX/00_ExternalLoader/NUCLEO-G071-W25Q128_SPI-ExtLoader-GitHub/Core/Src
 SourceFiles=;
 
